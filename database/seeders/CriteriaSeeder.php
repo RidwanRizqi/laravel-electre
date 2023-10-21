@@ -16,11 +16,11 @@ class CriteriaSeeder extends Seeder
         $criterias = [
             [
                 'criteria' => 'jarak dengan pusat niaga terdekat(km)',
-                'weight' => 5,
+                'weight' => 6,
             ],
             [
                 'criteria' => 'kepadatan penduduk disekitar lokasi (orang/km2)',
-                'weight' => 4,
+                'weight' => 2,
             ],
             [
                 'criteria' => 'jarak dari pabrik(km)',
@@ -28,11 +28,11 @@ class CriteriaSeeder extends Seeder
             ],
             [
                 'criteria' => 'jarak dengan gudang yang sudah ada (km)',
-                'weight' => 3,
+                'weight' => 2,
             ],
             [
                 'criteria' => 'jarak dengan gudang yang sudah ada (km)',
-                'weight' => 2,
+                'weight' => 4,
             ],
         ];
 
