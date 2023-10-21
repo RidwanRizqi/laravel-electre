@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('criterias', function (Blueprint $table) {
-            $table->id('id_criteria');
+            $table->engine = 'MyISAM';
+            $table->unsignedTinyInteger('id_criteria', true);
             $table->string('criteria', 100);
             $table->float('weight');
             $table->timestamps();

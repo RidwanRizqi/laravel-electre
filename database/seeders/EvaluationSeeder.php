@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Evaluation;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class EvaluationSeeder extends Seeder
 {
@@ -13,7 +14,8 @@ class EvaluationSeeder extends Seeder
      */
     public function run(): void
     {
-        $evaluations = [
+//        insert using db insert
+        DB::table('evaluations')->insert([
             [
                 'id_alternative' => 1,
                 'id_criteria' => 1,
@@ -239,10 +241,6 @@ class EvaluationSeeder extends Seeder
                 'id_criteria' => 5,
                 'value' => 1,
             ],
-        ];
-
-        foreach ($evaluations as $evaluation) {
-            Evaluation::create($evaluation);
-        }
+        ]);
     }
 }

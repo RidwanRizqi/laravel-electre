@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('alternatives', function (Blueprint $table) {
-            $table->id('id_alternative');
+            $table->engine = 'MyISAM';
+            $table->unsignedSmallInteger('id_alternative', true);
             $table->string('name', 30);
             $table->timestamps();
         });

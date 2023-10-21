@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('evaluations', function (Blueprint $table) {
-            $table->unsignedBigInteger('id_alternative');
-            $table->unsignedBigInteger('id_criteria');
+            $table->engine = 'MyISAM';
+            $table->unsignedSmallInteger('id_alternative');
+            $table->unsignedTinyInteger('id_criteria');
             $table->float('value');
             $table->timestamps();
 

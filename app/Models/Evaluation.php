@@ -11,6 +11,12 @@ class Evaluation extends Model
 
     protected $primaryKey = ['id_alternative', 'id_criteria'];
 
+    protected $casts = [
+        'id_alternative' => 'integer',
+        'id_criteria' => 'integer',
+        'value' => 'float',
+    ];
+
     protected $fillable = [
         'id_alternative',
         'id_criteria',
