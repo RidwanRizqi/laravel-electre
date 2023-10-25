@@ -7,16 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Evaluation extends Model
 {
-    protected $table = 'evaluations';
-
-    protected $primaryKey = ['id_alternative', 'id_criteria'];
-
-    protected $casts = [
-        'id_alternative' => 'integer',
-        'id_criteria' => 'integer',
-        'value' => 'float',
-    ];
-
     protected $fillable = [
         'id_alternative',
         'id_criteria',
@@ -31,5 +21,10 @@ class Evaluation extends Model
     public function criteria()
     {
         return $this->belongsTo(Criteria::class, 'id_criteria', 'id_criteria');
+    }
+
+    public function getValue()
+    {
+        return $this->value;
     }
 }
