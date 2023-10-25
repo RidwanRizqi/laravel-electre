@@ -54,6 +54,26 @@
                         @endforeach
                         </tbody>
                     </table>
+                    <div class="container">
+                        <table class="table table-bordered">
+                            <thead>
+                            <tr>
+                                <th>Criteria</th>
+                                @foreach ($criterias as $criteria)
+                                    <th>{{ $criteria->criteria }}</th>
+                                @endforeach
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>Rata-rata</td>
+                                @foreach ($criteriaAverages as $avg)
+                                    <td>{{ $avg }}</td>
+                                @endforeach
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
