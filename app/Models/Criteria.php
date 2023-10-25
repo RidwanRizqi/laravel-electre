@@ -16,4 +16,9 @@ class Criteria extends Model
         'criteria',
         'weight',
     ];
+
+    public function evaluations()
+    {
+        return $this->hasMany(Evaluation::class, 'id_criteria', 'id_criteria');
+    }
 }
