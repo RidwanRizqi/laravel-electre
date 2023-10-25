@@ -84,6 +84,8 @@ class EvaluationController extends Controller
             $concordanceMatrix[] = $concordanceRow;
         }
 
+//        dd($weightedMatrix);
+
         // Hitung Matriks Discordance (D)
         $discordanceMatrix = [];
         for ($k = 0; $k < $n; $k++) {
@@ -100,7 +102,16 @@ class EvaluationController extends Controller
                         }
                     }
                     // Hitung Dkl sesuai dengan rumus yang sesuai
-                    $discordanceRow[] = $Dkl;
+                    $maxDkl = 0;
+                    for ($i = 0; $i < count($alternatives); $i++) {
+                        if ($i !== $k && $i !== $l) {
+                            $DklValue = abs($weightedMatrix[$k][$i] - $weightedMatrix[$l][$i]);
+                            if ($DklValue > $maxDkl) {
+                                $maxDkl = $DklValue;
+                            }
+                        }
+                    }
+                    $discordanceRow[] = ($maxDkl === 0) ? 0 : ($Dkl / $maxDkl);
                 }
             }
             $discordanceMatrix[] = $discordanceRow;
