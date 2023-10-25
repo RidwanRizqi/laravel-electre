@@ -15,25 +15,21 @@ class CriteriaSeeder extends Seeder
     {
         $criterias = [
             [
-                'criteria' => 'jarak dengan pusat niaga terdekat(km)',
-                'weight' => 6,
+                'criteria' => 'Pengalaman',
+                'weight' => 0.3,
             ],
             [
-                'criteria' => 'kepadatan penduduk disekitar lokasi (orang/km2)',
-                'weight' => 2,
+                'criteria' => 'Kepemimpinan',
+                'weight' => 0.2,
             ],
             [
-                'criteria' => 'jarak dari pabrik(km)',
-                'weight' => 4,
+                'criteria' => 'Komunikas',
+                'weight' => 0.3,
             ],
             [
-                'criteria' => 'jarak dengan gudang yang sudah ada (km)',
-                'weight' => 2,
-            ],
-            [
-                'criteria' => 'jarak dengan gudang yang sudah ada (km)',
-                'weight' => 4,
-            ],
+                'criteria' => 'Pengembangan',
+                'weight' => 0.2,
+            ]
         ];
 
         foreach ($criterias as $criteria) {

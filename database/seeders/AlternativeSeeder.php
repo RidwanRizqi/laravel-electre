@@ -15,31 +15,19 @@ class AlternativeSeeder extends Seeder
     {
         $alternatives = [
             [
-                'name' => 'Cikarang',
+                'name' => 'A1',
             ],
             [
-                'name' => 'Pulo Gadung',
+                'name' => 'A2',
             ],
             [
-                'name' => 'Pluit',
+                'name' => 'A3',
             ],
             [
-                'name' => 'Cakung',
+                'name' => 'A4',
             ],
             [
-                'name' => 'Sunter',
-            ],
-            [
-                'name' => 'Pulomas',
-            ],
-            [
-                'name' => 'Ancol'
-            ],
-            [
-                'name' => 'Kelapa Gading',
-            ],
-            [
-                'name' => 'Cibitung'
+                'name' => 'A5',
             ]
         ];
 
