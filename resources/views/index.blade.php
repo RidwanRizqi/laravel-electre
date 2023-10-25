@@ -330,6 +330,40 @@
             </div>
         </div>
     </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="panelsStayOpen-headingNine">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#panelsStayOpen-collapseNine" aria-expanded="false"
+                    aria-controls="panelsStayOpen-collapseNine">
+                Hasil
+            </button>
+        </h2>
+        <div id="panelsStayOpen-collapseNine" class="accordion-collapse collapse"
+             aria-labelledby="panelsStayOpen-headingNine">
+            <div class="accordion-body">
+                <div class="container">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Peringkat</th>
+                            <th>Alternatif</th>
+                            <th>Prioritas</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach ($prioritizedAlternativesWithRank as $item)
+                            <tr>
+                                <td>{{ $loop->index + 1 }}</td>
+                                <td>{{ $item['alternative']->name }}</td>
+                                <td>{{ $item['rank'] }}</td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"

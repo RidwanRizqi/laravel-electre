@@ -61,13 +61,13 @@ class EvaluationController extends Controller
             $weightedMatrix[] = $weightedRow;
         }
 
-        $n = count($alternatives);
+        $m = count($alternatives);
 
         // Hitung Matriks Concordance (C)
         $concordanceMatrix = [];
-        for ($k = 0; $k < $n; $k++) {
+        for ($k = 0; $k < $m; $k++) {
             $concordanceRow = [];
-            for ($l = 0; $l < $n; $l++) {
+            for ($l = 0; $l < $m; $l++) {
                 if ($k === $l) {
                     $concordanceRow[] = 0; // Nilai diagonal Ckl
                 } else {
@@ -86,6 +86,8 @@ class EvaluationController extends Controller
 
 //        dd($weightedMatrix);
 
+        $n = count($alternatives);
+
         // Hitung Matriks Discordance (D)
         $discordanceMatrix = [];
         for ($k = 0; $k < $n; $k++) {
@@ -95,20 +97,20 @@ class EvaluationController extends Controller
                     $discordanceRow[] = 0; // Nilai diagonal Dkl
                 } else {
                     $Dkl = 0;
-                    for ($j = 0; $j < count($criterias); $j++) {
-                        $DklValue = abs($weightedMatrix[$k][$j] - $weightedMatrix[$l][$j]);
-                        if ($DklValue > $Dkl) {
-                            $Dkl = $DklValue;
+                    for ($j = 0; $j < count($alternatives) - 1; $j++) {
+                        if ($weightedMatrix[$k][$j] < $weightedMatrix[$l][$j]) {
+                            $DklValue = abs($weightedMatrix[$k][$j] - $weightedMatrix[$l][$j]);
+                            if ($DklValue > $Dkl) {
+                                $Dkl = $DklValue;
+                            }
                         }
                     }
                     // Hitung Dkl sesuai dengan rumus yang sesuai
                     $maxDkl = 0;
-                    for ($i = 0; $i < count($alternatives); $i++) {
-                        if ($i !== $k && $i !== $l) {
-                            $DklValue = abs($weightedMatrix[$k][$i] - $weightedMatrix[$l][$i]);
-                            if ($DklValue > $maxDkl) {
-                                $maxDkl = $DklValue;
-                            }
+                    for ($i = 0; $i < count($criterias); $i++) {
+                        $DklValue = abs($weightedMatrix[$k][$i] - $weightedMatrix[$l][$i]);
+                        if ($DklValue > $maxDkl) {
+                            $maxDkl = $DklValue;
                         }
                     }
                     $discordanceRow[] = ($maxDkl === 0) ? 0 : ($Dkl / $maxDkl);
@@ -116,6 +118,9 @@ class EvaluationController extends Controller
             }
             $discordanceMatrix[] = $discordanceRow;
         }
+
+
+
 
         // Hitung threshold c
         $sigma_c = 0;
@@ -167,6 +172,27 @@ class EvaluationController extends Controller
             }
         }
 
+        $n = count($alternatives);
+
+        // Menentukan alternatif mana yang menjadi prioritas
+        $priorities = [];
+        for ($i = 0; $i < $n; $i++) {
+            $priorities[$i] = array_sum($eMatrix[$i]); // Menjumlahkan semua nilai dalam baris E
+        }
+
+        // Mengurutkan alternatif berdasarkan prioritas (dari tinggi ke rendah)
+        arsort($priorities);
+
+        // Mendapatkan daftar alternatif yang menjadi prioritas
+        $prioritizedAlternatives = [];
+        foreach ($priorities as $key => $value) {
+            $prioritizedAlternatives[] = $alternatives[$key];
+        }
+
+        // Menggabungkan peringkat dan alternatif menjadi satu array
+        $prioritizedAlternativesWithRank = array_map(function ($alternative, $rank) {
+            return ['alternative' => $alternative, 'rank' => $rank];
+        }, $prioritizedAlternatives, $priorities);
 
         return view('index', compact(
                 'alternatives',
@@ -182,7 +208,9 @@ class EvaluationController extends Controller
                 'threshold_d',
                 'fMatrix',
                 'gMatrix',
-                'eMatrix')
+                'eMatrix',
+                'prioritizedAlternativesWithRank',
+            )
         );
     }
 
