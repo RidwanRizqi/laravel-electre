@@ -109,6 +109,26 @@
                     <table class="table table-bordered">
                         <thead>
                         <tr>
+                            <th>Criteria</th>
+                            @foreach ($criterias as $criteria)
+                                <th>{{ $criteria->criteria }}</th>
+                            @endforeach
+                        </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Weight</td>
+                                @foreach ($weights as $weight)
+                                    <td>{{ $weight }}</td>
+                                @endforeach
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="container">
+                    <table class="table table-bordered">
+                        <thead>
+                        <tr>
                             <th>Alternatif</th>
                             @foreach ($criterias as $criteria)
                                 <th>{{ $criteria->criteria }}</th>
@@ -207,7 +227,7 @@
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                     data-bs-target="#panelsStayOpen-collapseSix" aria-expanded="false"
                     aria-controls="panelsStayOpen-collapseSix">
-                Matrix Concordance
+                Matrix Concordance Dominance (F)
             </button>
         </h2>
         <div id="panelsStayOpen-collapseSix" class="accordion-collapse collapse"
@@ -228,7 +248,7 @@
                             <tr>
                                 <td>{{ $alternative->name }}</td>
                                 @foreach ($alternatives as $altKey2 => $alternative2)
-                                    <td>{{ $concordanceMatrix[$altKey][$altKey2] }}</td>
+                                    <td>{{ $fMatrix[$altKey][$altKey2] }}</td>
                                 @endforeach
                             </tr>
                         @endforeach
@@ -243,7 +263,7 @@
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                     data-bs-target="#panelsStayOpen-collapseSeven" aria-expanded="false"
                     aria-controls="panelsStayOpen-collapseSeven">
-                Matrix Discordance
+                Matrix Discordance Dominance (G)
             </button>
         </h2>
         <div id="panelsStayOpen-collapseSeven" class="accordion-collapse collapse"
@@ -264,7 +284,43 @@
                             <tr>
                                 <td>{{ $alternative->name }}</td>
                                 @foreach ($alternatives as $altKey2 => $alternative2)
-                                    <td>{{ $discordanceMatrix[$altKey][$altKey2] }}</td>
+                                    <td>{{ $gMatrix[$altKey][$altKey2] }}</td>
+                                @endforeach
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="panelsStayOpen-headingEight">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#panelsStayOpen-collapseEight" aria-expanded="false"
+                    aria-controls="panelsStayOpen-collapseEight">
+                Matrix Agregation Dominance (E)
+            </button>
+        </h2>
+        <div id="panelsStayOpen-collapseEight" class="accordion-collapse collapse"
+             aria-labelledby="panelsStayOpen-headingEight">
+            <div class="accordion-body">
+                <div class="container">
+                    <table class="table table-bordered">
+                        <thead>
+                        <tr>
+                            <th>Alternatif</th>
+                            @foreach ($alternatives as $alternative)
+                                <th>{{ $alternative->name }}</th>
+                            @endforeach
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach ($alternatives as $altKey => $alternative)
+                            <tr>
+                                <td>{{ $alternative->name }}</td>
+                                @foreach ($alternatives as $altKey2 => $alternative2)
+                                    <td>{{ $eMatrix[$altKey][$altKey2] }}</td>
                                 @endforeach
                             </tr>
                         @endforeach

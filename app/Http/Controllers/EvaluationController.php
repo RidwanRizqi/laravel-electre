@@ -18,20 +18,26 @@ class EvaluationController extends Controller
         $criterias = Criteria::all();
         $evaluations = Evaluation::all();
 
-        // Hitung rata-rata per kriteria
+        // Menentukan nilai rata-rata kuadrat per-kriteria
         $criteriaAverages = [];
         foreach ($criterias as $criteria) {
             $criteriaId = $criteria->id_criteria;
-            $criteriaEvaluations = $evaluations->where('id_criteria', $criteriaId)->pluck('value');
-            $criteriaAverages[$criteriaId] = $criteriaEvaluations->avg();
+            $squaredSum = 0;
+            foreach ($evaluations as $evaluation) {
+                if ($evaluation->id_criteria === $criteriaId) {
+                    $squaredSum += pow($evaluation->value, 2);
+                }
+            }
+            $criteriaAverages[$criteriaId] = sqrt($squaredSum);
         }
 
-        // Hitung matriks R ternomalisasi
+        // Menormalisasi matriks X menjadi matriks R
         $normalizedMatrix = [];
         foreach ($alternatives as $alternative) {
             $normalizedRow = [];
             foreach ($criterias as $criteria) {
-                $evaluation = $evaluations->where('id_alternative', $alternative->id_alternative)
+                $evaluation = $evaluations
+                    ->where('id_alternative', $alternative->id_alternative)
                     ->where('id_criteria', $criteria->id_criteria)
                     ->first();
                 if ($evaluation) {
@@ -55,33 +61,48 @@ class EvaluationController extends Controller
             $weightedMatrix[] = $weightedRow;
         }
 
-        // Hitung Concordance Index (Ckl) dan Discordance Index (Dkl)
-        $concordanceMatrix = [];
-        $discordanceMatrix = [];
         $n = count($alternatives);
-        for ($i = 0; $i < $n; $i++) {
+
+        // Hitung Matriks Concordance (C)
+        $concordanceMatrix = [];
+        for ($k = 0; $k < $n; $k++) {
             $concordanceRow = [];
-            $discordanceRow = [];
-            for ($j = 0; $j < $n; $j++) {
-                if ($i === $j) {
+            for ($l = 0; $l < $n; $l++) {
+                if ($k === $l) {
                     $concordanceRow[] = 0; // Nilai diagonal Ckl
-                    $discordanceRow[] = 0; // Nilai diagonal Dkl
                 } else {
                     $Ckl = 0;
-                    $Dkl = 0;
-                    for ($k = 0; $k < count($criterias); $k++) {
-                        if ($weightedMatrix[$i][$k] >= $weightedMatrix[$j][$k]) {
-                            $Ckl++;
-                        } else {
-                            $Dkl++;
+                    for ($j = 0; $j < count($criterias); $j++) {
+                        if ($weightedMatrix[$k][$j] >= $weightedMatrix[$l][$j]) {
+                            $Ckl += $weights[$j]; // Bobot kriteria
                         }
                     }
-                    // Hitung Ckl dan Dkl sesuai dengan rumus yang sesuai
-                    $concordanceRow[] = $Ckl / count($criterias);
-                    $discordanceRow[] = $Dkl / count($criterias);
+                    // Hitung Ckl sesuai dengan rumus yang sesuai
+                    $concordanceRow[] = $Ckl;
                 }
             }
             $concordanceMatrix[] = $concordanceRow;
+        }
+
+        // Hitung Matriks Discordance (D)
+        $discordanceMatrix = [];
+        for ($k = 0; $k < $n; $k++) {
+            $discordanceRow = [];
+            for ($l = 0; $l < $n; $l++) {
+                if ($k === $l) {
+                    $discordanceRow[] = 0; // Nilai diagonal Dkl
+                } else {
+                    $Dkl = 0;
+                    for ($j = 0; $j < count($criterias); $j++) {
+                        $DklValue = abs($weightedMatrix[$k][$j] - $weightedMatrix[$l][$j]);
+                        if ($DklValue > $Dkl) {
+                            $Dkl = $DklValue;
+                        }
+                    }
+                    // Hitung Dkl sesuai dengan rumus yang sesuai
+                    $discordanceRow[] = $Dkl;
+                }
+            }
             $discordanceMatrix[] = $discordanceRow;
         }
 
@@ -103,41 +124,38 @@ class EvaluationController extends Controller
         }
         $threshold_d = $sigma_d / ($n * ($n - 1));
 
-        // Hitung matriks dominan f
+        // Membentuk Matriks Concordance Dominan (F)
         $fMatrix = [];
-        for ($i = 0; $i < $n; $i++) {
-            $fRow = [];
-            for ($j = 0; $j < $n; $j++) {
-                if ($i === $j) {
-                    $fRow[] = 0; // Nilai diagonal f
-                } else {
-                    if ($concordanceMatrix[$i][$j] >= $threshold_c && $discordanceMatrix[$i][$j] <= $threshold_d) {
-                        $fRow[] = 1; // Alternatif i mendominasi alternatif j
-                    } else {
-                        $fRow[] = 0; // Alternatif i tidak mendominasi alternatif j
-                    }
-                }
+        foreach ($concordanceMatrix as $k => $cl) {
+            $fMatrix[$k] = [];
+            foreach ($cl as $l => $value) {
+                $fMatrix[$k][$l] = ($value >= $threshold_c ? 1 : 0);
             }
-            $fMatrix[] = $fRow;
         }
 
-        // Hitung matriks dominan g
+        // Membentuk Matriks Discordance Dominan (G)
         $gMatrix = [];
-        for ($i = 0; $i < $n; $i++) {
-            $gRow = [];
-            for ($j = 0; $j < $n; $j++) {
-                if ($i === $j) {
-                    $gRow[] = 0; // Nilai diagonal g
-                } else {
-                    if ($concordanceMatrix[$i][$j] >= $threshold_c && $discordanceMatrix[$i][$j] > $threshold_d) {
-                        $gRow[] = 1; // Alternatif i mendominasi alternatif j
-                    } else {
-                        $gRow[] = 0; // Alternatif i tidak mendominasi alternatif j
-                    }
-                }
+        foreach ($discordanceMatrix as $k => $dl) {
+            $gMatrix[$k] = [];
+            foreach ($dl as $l => $value) {
+                $gMatrix[$k][$l] = ($value >= $threshold_d ? 1 : 0);
             }
-            $gMatrix[] = $gRow;
         }
+
+        // Membentuk Matriks Agregasi Dominan (E)
+        $eMatrix = [];
+        for ($i = 0; $i < $n; $i++) {
+            $eMatrix[$i] = [];
+            for ($j = 0; $j < $n; $j++) {
+                // Hitung E sesuai dengan rumus E = F * G
+                $eValue = $fMatrix[$i][$j] * $gMatrix[$i][$j];
+//                print $fMatrix[$i][$j] . ' * ' . $gMatrix[$i][$j] . ' = ';
+//                print $eValue;
+//                print '<br>';
+                $eMatrix[$i][$j] = $eValue;
+            }
+        }
+
 
         return view('index', compact(
                 'alternatives',
@@ -145,13 +163,15 @@ class EvaluationController extends Controller
                 'evaluations',
                 'normalizedMatrix',
                 'criteriaAverages',
+                'weights',
                 'weightedMatrix',
                 'concordanceMatrix',
                 'discordanceMatrix',
                 'threshold_c',
                 'threshold_d',
                 'fMatrix',
-                'gMatrix')
+                'gMatrix',
+                'eMatrix')
         );
     }
 
