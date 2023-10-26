@@ -19,6 +19,69 @@ class EvaluationController extends Controller
         $evaluations = Evaluation::all();
 
         // Menentukan nilai rata-rata kuadrat per-kriteria
+        $criteriaAverages = $this->calculateCriteriaAverages($criterias, $evaluations);
+
+        // Menormalisasi matriks X menjadi matriks R
+        $normalizedMatrix = $this->calculateNormalizedMatrix($alternatives, $criterias, $evaluations, $criteriaAverages);
+
+        // Hitung matriks V
+        $weights = $criterias->pluck('weight');
+        $weightedMatrix = $this->calculateWeightedMatrix($normalizedMatrix, $weights);
+
+        $n = count($alternatives);
+
+        // Hitung Matriks Concordance (C)
+        $concordanceMatrix = $this->calculateConcordanceMatrix($weightedMatrix, $weights, $n, $criterias);
+
+//        dd($weightedMatrix);
+
+        // Hitung Matriks Discordance (D)
+        $discordanceMatrix = $this->calculateDiscordanceMatrix($weightedMatrix, $alternatives, $n, $criterias);
+
+
+
+
+        // Hitung threshold c
+        $threshold_c = $this->calculateThreshold($concordanceMatrix, $n);
+
+        // Hitung threshold d
+        $threshold_d = $this->calculateThreshold($discordanceMatrix, $n);
+
+        // Membentuk Matriks Concordance Dominan (F)
+        $fMatrix = $this->calcluateConcordanceDominantMatrix($concordanceMatrix, $threshold_c);
+
+        // Membentuk Matriks Discordance Dominan (G)
+        $gMatrix = $this->calculateDiscordanceDominantMatrix($discordanceMatrix, $threshold_d);
+
+        // Membentuk Matriks Agregasi Dominan (E)
+        $eMatrix = $this->calculateAggregationDominantMatrix($fMatrix, $gMatrix, $n);
+
+
+        // Menentukan prioritas alternatif
+        $prioritizedAlternativesWithRank = $this->calculatePriorities($eMatrix, $n, $alternatives);
+
+        return view('index', compact(
+                'alternatives',
+                'criterias',
+                'evaluations',
+                'normalizedMatrix',
+                'criteriaAverages',
+                'weights',
+                'weightedMatrix',
+                'concordanceMatrix',
+                'discordanceMatrix',
+                'threshold_c',
+                'threshold_d',
+                'fMatrix',
+                'gMatrix',
+                'eMatrix',
+                'prioritizedAlternativesWithRank',
+            )
+        );
+    }
+
+    public function calculateCriteriaAverages($criterias, $evaluations)
+    {
         $criteriaAverages = [];
         foreach ($criterias as $criteria) {
             $criteriaId = $criteria->id_criteria;
@@ -30,8 +93,11 @@ class EvaluationController extends Controller
             }
             $criteriaAverages[$criteriaId] = sqrt($squaredSum);
         }
+        return $criteriaAverages;
+    }
 
-        // Menormalisasi matriks X menjadi matriks R
+    public function calculateNormalizedMatrix($alternatives, $criterias, $evaluations, $criteriaAverages)
+    {
         $normalizedMatrix = [];
         foreach ($alternatives as $alternative) {
             $normalizedRow = [];
@@ -49,9 +115,11 @@ class EvaluationController extends Controller
             }
             $normalizedMatrix[] = $normalizedRow;
         }
+        return $normalizedMatrix;
+    }
 
-        // Hitung matriks V
-        $weights = $criterias->pluck('weight');
+    public function calculateWeightedMatrix($normalizedMatrix, $weights)
+    {
         $weightedMatrix = [];
         foreach ($normalizedMatrix as $row) {
             $weightedRow = [];
@@ -60,14 +128,15 @@ class EvaluationController extends Controller
             }
             $weightedMatrix[] = $weightedRow;
         }
+        return $weightedMatrix;
+    }
 
-        $m = count($alternatives);
-
-        // Hitung Matriks Concordance (C)
+    public function calculateConcordanceMatrix($weightedMatrix, $weights, $n, $criterias)
+    {
         $concordanceMatrix = [];
-        for ($k = 0; $k < $m; $k++) {
+        for ($k = 0; $k < $n; $k++) {
             $concordanceRow = [];
-            for ($l = 0; $l < $m; $l++) {
+            for ($l = 0; $l < $n; $l++) {
                 if ($k === $l) {
                     $concordanceRow[] = 0; // Nilai diagonal Ckl
                 } else {
@@ -83,12 +152,11 @@ class EvaluationController extends Controller
             }
             $concordanceMatrix[] = $concordanceRow;
         }
+        return $concordanceMatrix;
+    }
 
-//        dd($weightedMatrix);
-
-        $n = count($alternatives);
-
-        // Hitung Matriks Discordance (D)
+    public function calculateDiscordanceMatrix($weightedMatrix, $alternatives, $n, $criterias)
+    {
         $discordanceMatrix = [];
         for ($k = 0; $k < $n; $k++) {
             $discordanceRow = [];
@@ -118,29 +186,22 @@ class EvaluationController extends Controller
             }
             $discordanceMatrix[] = $discordanceRow;
         }
+        return $discordanceMatrix;
+    }
 
-
-
-
-        // Hitung threshold c
-        $sigma_c = 0;
-        foreach ($concordanceMatrix as $row) {
+    public function calculateThreshold($matrix, $n)
+    {
+        $sigma = 0;
+        foreach ($matrix as $row) {
             foreach ($row as $value) {
-                $sigma_c += $value;
+                $sigma += $value;
             }
         }
-        $threshold_c = $sigma_c / ($n * ($n - 1));
+        return $sigma / ($n * ($n - 1));
+    }
 
-        // Hitung threshold d
-        $sigma_d = 0;
-        foreach ($discordanceMatrix as $row) {
-            foreach ($row as $value) {
-                $sigma_d += $value;
-            }
-        }
-        $threshold_d = $sigma_d / ($n * ($n - 1));
-
-        // Membentuk Matriks Concordance Dominan (F)
+    public function calcluateConcordanceDominantMatrix($concordanceMatrix, $threshold_c)
+    {
         $fMatrix = [];
         foreach ($concordanceMatrix as $k => $cl) {
             $fMatrix[$k] = [];
@@ -148,8 +209,11 @@ class EvaluationController extends Controller
                 $fMatrix[$k][$l] = ($value >= $threshold_c ? 1 : 0);
             }
         }
+        return $fMatrix;
+    }
 
-        // Membentuk Matriks Discordance Dominan (G)
+    public function calculateDiscordanceDominantMatrix($discordanceMatrix, $threshold_d)
+    {
         $gMatrix = [];
         foreach ($discordanceMatrix as $k => $dl) {
             $gMatrix[$k] = [];
@@ -157,24 +221,25 @@ class EvaluationController extends Controller
                 $gMatrix[$k][$l] = ($value >= $threshold_d ? 1 : 0);
             }
         }
+        return $gMatrix;
+    }
 
-        // Membentuk Matriks Agregasi Dominan (E)
+    public function calculateAggregationDominantMatrix($fMatrix, $gMatrix, $n)
+    {
         $eMatrix = [];
         for ($i = 0; $i < $n; $i++) {
             $eMatrix[$i] = [];
             for ($j = 0; $j < $n; $j++) {
                 // Hitung E sesuai dengan rumus E = F * G
                 $eValue = $fMatrix[$i][$j] * $gMatrix[$i][$j];
-//                print $fMatrix[$i][$j] . ' * ' . $gMatrix[$i][$j] . ' = ';
-//                print $eValue;
-//                print '<br>';
                 $eMatrix[$i][$j] = $eValue;
             }
         }
+        return $eMatrix;
+    }
 
-        $n = count($alternatives);
-
-        // Menentukan alternatif mana yang menjadi prioritas
+    public function calculatePriorities($eMatrix, $n, $alternatives)
+    {
         $priorities = [];
         for ($i = 0; $i < $n; $i++) {
             $priorities[$i] = array_sum($eMatrix[$i]); // Menjumlahkan semua nilai dalam baris E
@@ -193,24 +258,6 @@ class EvaluationController extends Controller
         $prioritizedAlternativesWithRank = array_map(function ($alternative, $rank) {
             return ['alternative' => $alternative, 'rank' => $rank];
         }, $prioritizedAlternatives, $priorities);
-
-        return view('index', compact(
-                'alternatives',
-                'criterias',
-                'evaluations',
-                'normalizedMatrix',
-                'criteriaAverages',
-                'weights',
-                'weightedMatrix',
-                'concordanceMatrix',
-                'discordanceMatrix',
-                'threshold_c',
-                'threshold_d',
-                'fMatrix',
-                'gMatrix',
-                'eMatrix',
-                'prioritizedAlternativesWithRank',
-            )
-        );
+        return $prioritizedAlternativesWithRank;
     }
 }
