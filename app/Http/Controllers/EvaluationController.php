@@ -17,6 +17,7 @@ class EvaluationController extends Controller
         $alternatives = Alternative::all();
         $criterias = Criteria::all();
         $evaluations = Evaluation::all();
+        $n = count($alternatives);
 
         // Menentukan nilai rata-rata kuadrat per-kriteria
         $criteriaAverages = $this->calculateCriteriaAverages($criterias, $evaluations);
@@ -28,18 +29,11 @@ class EvaluationController extends Controller
         $weights = $criterias->pluck('weight');
         $weightedMatrix = $this->calculateWeightedMatrix($normalizedMatrix, $weights);
 
-        $n = count($alternatives);
-
         // Hitung Matriks Concordance (C)
         $concordanceMatrix = $this->calculateConcordanceMatrix($weightedMatrix, $weights, $n, $criterias);
 
-//        dd($weightedMatrix);
-
         // Hitung Matriks Discordance (D)
         $discordanceMatrix = $this->calculateDiscordanceMatrix($weightedMatrix, $alternatives, $n, $criterias);
-
-
-
 
         // Hitung threshold c
         $threshold_c = $this->calculateThreshold($concordanceMatrix, $n);
@@ -55,7 +49,6 @@ class EvaluationController extends Controller
 
         // Membentuk Matriks Agregasi Dominan (E)
         $eMatrix = $this->calculateAggregationDominantMatrix($fMatrix, $gMatrix, $n);
-
 
         // Menentukan prioritas alternatif
         $prioritizedAlternativesWithRank = $this->calculatePriorities($eMatrix, $n, $alternatives);
@@ -255,9 +248,8 @@ class EvaluationController extends Controller
         }
 
         // Menggabungkan peringkat dan alternatif menjadi satu array
-        $prioritizedAlternativesWithRank = array_map(function ($alternative, $rank) {
+        return array_map(function ($alternative, $rank) {
             return ['alternative' => $alternative, 'rank' => $rank];
         }, $prioritizedAlternatives, $priorities);
-        return $prioritizedAlternativesWithRank;
     }
 }
