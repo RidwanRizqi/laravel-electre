@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Alternative;
 use App\Models\Criteria;
 use App\Models\Evaluation;
-use Illuminate\Http\Request;
 
 class EvaluationController extends Controller
 {
@@ -19,38 +18,17 @@ class EvaluationController extends Controller
         $evaluations = Evaluation::all();
         $n = count($alternatives);
 
-        // Menentukan nilai rata-rata kuadrat per-kriteria
         $criteriaAverages = $this->calculateCriteriaAverages($criterias, $evaluations);
-
-        // Menormalisasi matriks X menjadi matriks R
         $normalizedMatrix = $this->calculateNormalizedMatrix($alternatives, $criterias, $evaluations, $criteriaAverages);
-
-        // Hitung matriks V
         $weights = $criterias->pluck('weight');
         $weightedMatrix = $this->calculateWeightedMatrix($normalizedMatrix, $weights);
-
-        // Hitung Matriks Concordance (C)
         $concordanceMatrix = $this->calculateConcordanceMatrix($weightedMatrix, $weights, $n, $criterias);
-
-        // Hitung Matriks Discordance (D)
         $discordanceMatrix = $this->calculateDiscordanceMatrix($weightedMatrix, $alternatives, $n, $criterias);
-
-        // Hitung threshold c
         $threshold_c = $this->calculateThreshold($concordanceMatrix, $n);
-
-        // Hitung threshold d
         $threshold_d = $this->calculateThreshold($discordanceMatrix, $n);
-
-        // Membentuk Matriks Concordance Dominan (F)
         $fMatrix = $this->calcluateConcordanceDominantMatrix($concordanceMatrix, $threshold_c);
-
-        // Membentuk Matriks Discordance Dominan (G)
         $gMatrix = $this->calculateDiscordanceDominantMatrix($discordanceMatrix, $threshold_d);
-
-        // Membentuk Matriks Agregasi Dominan (E)
         $eMatrix = $this->calculateAggregationDominantMatrix($fMatrix, $gMatrix, $n);
-
-        // Menentukan prioritas alternatif
         $prioritizedAlternativesWithRank = $this->calculatePriorities($eMatrix, $n, $alternatives);
 
         return view('index', compact(
